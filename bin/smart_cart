@@ -1,0 +1,143 @@
+require_relative '../lib/smart_cart'
+
+module SmartCart
+  class CLI
+    def self.run
+      new.run
+    end
+
+    def initialize
+      SmartCart.load_data
+      @basket = SmartCart::Basket.new(
+        products: SmartCart::Product.all,
+        delivery_rules: SmartCart::DeliveryRule.all,
+        offers: SmartCart::Offer.all
+      )
+    end
+
+    def run
+      loop do
+        puts "\nMenu : "
+        puts "1. Products"
+        puts "2. Basket"
+        puts "3. Checkout"
+        puts "4. Help"
+        puts "5. Exit"
+        print "Choose an option (1-6): "
+        input = gets.chomp
+
+        case input
+        when '1'
+          list_products
+        when '2'
+          basket_menu
+        when '3'
+          checkout
+        when '4'
+          help_menu
+        when '5'
+          puts "\nGoodbye!"
+          break
+        else
+          puts "Invalid choice. Please try again."
+        end
+      end
+    end
+
+    private
+
+    def list_products
+      puts "\nAvailable Products :"
+      SmartCart::Product.all.each do |p|
+        puts "#{p.code}: #{p.name} - $#{p.price}"
+      end
+    end
+
+    def basket_menu
+      loop do
+        puts "\nBasket Menu :"
+        puts "1. Add item"
+        puts "2. View basket"
+        puts "3. Back"
+        print "Choose an option (1-3): "
+        choice = gets.chomp
+
+        case choice
+        when '1'
+          add_item_to_basket
+        when '2'
+          view_basket
+        when '3'
+          break
+        else
+          puts "Invalid choice. Please try again."
+        end
+      end
+    end
+
+    def add_item_to_basket
+      puts "\nAdd Product to Basket :"
+      SmartCart::Product.all.each_with_index do |product, idx|
+        puts "#{idx + 1}. #{product.code} - #{product.name} ($#{product.price})"
+      end
+      print "Enter the number of the product to add: "
+      index = gets.chomp.to_i
+      if index.between?(1, SmartCart::Product.all.size)
+        product = SmartCart::Product.all[index - 1]
+        @basket.add(product.code)
+        puts "Added #{product.name} (#{product.code}) to basket."
+      else
+        puts "Invalid selection."
+      end
+    end
+
+    def view_basket
+      puts "\nBasket Contents :"
+      if @basket.instance_variable_get(:@items).empty?
+        puts "Basket is empty."
+        return
+      end
+
+      @basket.instance_variable_get(:@items).each do |code, qty|
+        product = SmartCart::Product.find_by(code: code)
+        puts "#{product.name} (#{code}) x #{qty} - $#{product.price} each"
+      end
+    end
+
+    def checkout
+      puts "\nCheckout :"
+      view_basket
+      puts "\nTotal: $#{@basket.total}"
+    end
+
+    def clear_basket
+      @basket = SmartCart::Basket.new(
+        products: SmartCart::Product.all,
+        delivery_rules: SmartCart::DeliveryRule.all,
+        offers: SmartCart::Offer.all
+      )
+      puts "\nBasket cleared."
+    end
+
+    def help_menu
+      puts <<~HELP
+
+        Smart Cart CLI Help
+
+        Options:
+          1. Products : List available products
+          2. Basket   : Add/view items in basket
+          3. Checkout : Calculate total with offers and delivery
+          4. Help     : Show this help menu
+          5. Exit     : Quit the application
+
+        Example usage:
+          $ bin/smart_cart
+          Choose an option: 2 (Basket) → 1 (Add item) → 1 (first product)
+
+      HELP
+    end
+  end
+end
+
+SmartCart::CLI.run

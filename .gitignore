@@ -1,0 +1,20 @@
+# Ignore Mac system files
+.DS_Store
+
+# Ignore Bundler files
+*.gem
+
+# Ignore logs and temp files
+log/
+tmp/
+
+# Ignore coverage and test artifacts
+coverage/
+*.log
+
+# Ignore Ruby version and environment
+.ruby-version
+.rvmrc
+
+# Ignore system-level junk
+*.swp
